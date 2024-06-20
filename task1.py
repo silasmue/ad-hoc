@@ -24,6 +24,7 @@ def setup_broadcast_socket():
 
 # Function to listen for messages
 def listen_for_messages(socket):
+    logging.info(f"Listening on port {PORT}...")
     while True:
         data, address = socket.recvfrom(1024)
         packet = data.decode('utf-8')
@@ -46,7 +47,7 @@ def process_packet(socket, packet):
 
 def forward_message(socket, packet):
     socket.sendto(packet.encode('utf-8'), (BROADCAST_ADDR, PORT))
-    logging.info("Forwarded message {packet}")
+    logging.info(f"Forwarded message {packet}")
 
 
 def main():
@@ -55,8 +56,8 @@ def main():
     
     # Bind the listening socket to the port
     listen_sock.bind(('', PORT))
-    
-    # Start broadcasting and listening threads
+     
+    loggin.info(f"Service started with hostname {NODE_NAME}")
     threading.Thread(target=listen_for_messages, args=(listen_sock,)).start()
 
 if __name__ == "__main__":
