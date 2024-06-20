@@ -39,14 +39,14 @@ def process_packet(socket, packet):
     logging.info(f"Received message: {message} with ID: {message_id} from {source} with destination {destination}")
 
     if NODE_NAME == destination:
-        loggin.info(f"Message from {source} reached destination {destination}")
+        logging.info(f"Message from {source} reached destination {destination}")
         return
 
     forward_message(socket, packet)
 
 def forward_message(socket, packet):
     socket.sendto(packet.encode('utf-8'), (BROADCAST_ADDR, PORT))
-    loggin.info("Forwarded message {packet}")
+    logging.info("Forwarded message {packet}")
 
 
 def main():
