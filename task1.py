@@ -13,24 +13,23 @@ NODE_NAME = socket.gethostname()
 
 received_messages = {}
 
-forwarded_messages = set()
 
 # Set up the socket for broadcasting
-def setup_broadcast_socket():
+def setup_socket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     return sock
 
 # Function to listen for messages
-def listen_for_messages(socket):
+def listen_for_messages(sock):
     logging.info(f"Listening on port {PORT}...")
     while True:
-        data, address = socket.recvfrom(1024)
+        data, address = sock.recvfrom(1024)
         packet = data.decode('utf-8')
-        process_packet(socket, packet)
+        process_packet(sock, packet)
 
-def process_packet(socket, packet):
+def process_packet(sock, packet):
     message_id, source, destination, message = packet.split(':', 3)
 
     if message_id in received_messages:
@@ -43,16 +42,16 @@ def process_packet(socket, packet):
         logging.info(f"Message from {source} reached destination {destination}")
         return
 
-    forward_message(socket, packet)
+    forward_message(sock, packet)
 
-def forward_message(socket, packet):
-    socket.sendto(packet.encode('utf-8'), (BROADCAST_ADDR, PORT))
+def forward_message(sock, packet):
+    sock.sendto(packet.encode('utf-8'), (BROADCAST_ADDR, PORT))
     logging.info(f"Forwarded message {packet}")
 
 
 def main():
-    broadcast_sock = setup_broadcast_socket()
-    listen_sock = setup_broadcast_socket()
+    logging.getLogger().setLevel(logging.INFO)
+    listen_sock = setup_socket()
     
     # Bind the listening socket to the port
     listen_sock.bind(('', PORT))
