@@ -11,6 +11,10 @@ BROADCAST_ADDR = '192.168.210.255' # Basic broacast address see slides
 PORT = 5002 # Port 5000 + 2 for team 2 
 NODE_NAME = socket.gethostname()
 
+received_messages = {}
+
+forwarded_messages = set()
+
 # Set up the socket for broadcasting
 def setup_broadcast_socket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -19,10 +23,31 @@ def setup_broadcast_socket():
     return sock
 
 # Function to listen for messages
-def listen_for_messages(sock):
+def listen_for_messages(socket):
     while True:
-        data, addr = sock.recvfrom(1024)
-        print(f"Received message: {data.decode('utf-8')} from {addr}")
+        data, address = socket.recvfrom(1024)
+        packet = data.decode('utf-8')
+        process_packet(socket, packet)
+
+def process_packet(socket, packet):
+    message_id, source, destination, message = packet.split(':', 3)
+
+    if message_id in received_messages:
+        return
+
+    received_messages[message_id] = packet
+    loggin.info(f"Received message: {message} with ID: {message_id} from {source} with destination {destination}")
+
+    if NODE_NAME == destination:
+        loggin.info(f"Message from {source} reached destination {destination}")
+        return
+
+    forward_message(socket, packet)
+
+def forward_message(socket, packet):
+    socket.sendto(packet.encode('utf-8'), (BROADCAST_ADDR, PORT))
+    loggin.info("Forwarded message {packet}")
+
 
 def main():
     broadcast_sock = setup_broadcast_socket()
