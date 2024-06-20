@@ -1,9 +1,7 @@
 import socket
-import threading
-import time
-import argparse
 import logging
-import uuid
+
+# With the help of ChatGPT-4o
 
 
 # Broadcast address and port
