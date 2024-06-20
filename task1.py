@@ -58,7 +58,7 @@ def main():
     listen_sock.bind(('', PORT))
      
     logging.info(f"Service started with hostname {NODE_NAME}")
-    threading.Thread(target=listen_for_messages, args=(listen_sock,)).start()
+    listen_for_messages(listen_sock)
 
 if __name__ == "__main__":
     main()
