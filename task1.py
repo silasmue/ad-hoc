@@ -36,7 +36,7 @@ def process_packet(socket, packet):
         return
 
     received_messages[message_id] = packet
-    loggin.info(f"Received message: {message} with ID: {message_id} from {source} with destination {destination}")
+    logging.info(f"Received message: {message} with ID: {message_id} from {source} with destination {destination}")
 
     if NODE_NAME == destination:
         loggin.info(f"Message from {source} reached destination {destination}")
