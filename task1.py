@@ -1,11 +1,15 @@
 import socket
 import threading
 import time
+import argparse
+import logging
+import uuid
+
 
 # Broadcast address and port
 BROADCAST_ADDR = '192.168.210.255' # Basic broacast address see slides 
 PORT = 5002 # Port 5000 + 2 for team 2 
-MESSAGE = "Hello World"
+NODE_NAME = socket.hostname()
 
 # Set up the socket for broadcasting
 def setup_broadcast_socket():
