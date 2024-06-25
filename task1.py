@@ -11,6 +11,8 @@ NODE_NAME = socket.gethostname()
 
 received_messages = {}
 
+logging.basicConfig(filename=f'{NODE_NAME}.log', level=logging.INFO,
+                    format='%(asctime)s - %(message)s')
 
 # Set up the socket for broadcasting
 def setup_socket():
@@ -48,7 +50,6 @@ def forward_message(sock, packet):
 
 
 def main():
-    logging.getLogger().setLevel(logging.INFO)
     listen_sock = setup_socket()
     
     # Bind the listening socket to the port
