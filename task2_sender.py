@@ -1,16 +1,13 @@
-from asyncio import sleep
+                                                                                           
 import socket
 import uuid
 import logging
-import argparse
 
 BROADCAST_ADDR = '192.168.210.255'
 PORT = 5002
-message = ""
 NODE_NAME = socket.gethostname()
-dest = ""
 
-routes = dict
+routes = {}
 
 logging.basicConfig(filename=f'{NODE_NAME}.log', level=logging.INFO,
                     format='%(asctime)s - %(message)s')
@@ -23,62 +20,66 @@ def setup_broadcast_socket():
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     return sock
 
-def setup_recieve_socket():
+def setup_receive_socket():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(('', PORT))
     return sock
 
-# Function to broadcast message with intent to discover
 def broadcast_discovery_message(sock, message, message_id, destination):
     packet = f"D:{NODE_NAME}:{destination}:{message}:[{NODE_NAME}]"
     sock.sendto(packet.encode('utf-8'), (BROADCAST_ADDR, PORT))
     logging.info(f"Broadcasting D message: {packet}")
 
-# Function to broadcast message with intent to relay
-def broadcast_relay_message(sock, message, message_id, destination):
-    packet = f"R:{NODE_NAME}:{destination}:{message}:[{NODE_NAME}]"
+def broadcast_relay_message(sock, message, message_id, destination, route):
+    packet = f"R:{NODE_NAME}:{destination}:{message}:[{', '.join(route)}]"
     sock.sendto(packet.encode('utf-8'), (BROADCAST_ADDR, PORT))
     logging.info(f"Broadcasting R message: {packet}")
 
-# Function to listen for messages
 def listen_for_messages(sock):
     logging.info(f"Listening on port {PORT}...")
     while True:
         data, address = sock.recvfrom(1024)
         packet = data.decode('utf-8')
-        if process_packet(sock, packet):
-            return
+        if process_packet(packet):
+            return packet
 
-def process_packet(sock, packet):
-    type, source, destination, message, route = packet.split(':', 4)
-
+def process_packet(packet):
+    packet_type, source, destination, message, route = packet.split(':', 4)
+    route = route.strip('[]').split(',')
+    
     if destination == NODE_NAME:
-        logging.info(f"Route {route} recived for destination {source}")
-
-        routes[dest] = route[::-1]
+        logging.info(f"Route {route} received for destination {source}")
+        routes[source] = route[::-1]
         return True
-
     return False
 
-
 def main():
-    message = input("enter message: ")
-    dest = input("enter dest: ")
-    socket = setup_broadcast_socket()
-
-    if routes[dest] == None:
+    global routes
+    message = input("Enter message: ")
+    dest = input("Enter destination: ")
+    
+    if dest in routes:
         print(f"Route already exists, sending using route")
-        broadcast_relay_message(socket, message, UUID, dest)
-        return
+        socket = setup_broadcast_socket()
+        broadcast_relay_message(socket, message, UUID, dest, routes[dest])
+    else:
+        socket = setup_broadcast_socket()
+        broadcast_discovery_message(socket, message, UUID, dest)
+        socket = setup_receive_socket()
+        route_packet = listen_for_messages(socket)
 
-    broadcast_discovery_message(socket, message, UUID, dest)
-
-    socket = setup_recieve_socket()
-    socket.bind(('', PORT))
-
-    listen_for_messages(socket)
-
+        if route_packet:
+            process_packet(route_packet)
+            if dest in routes:
+                broadcast_relay_message(socket, message, UUID, dest, routes[dest])
+            else:
+                print(f"Route to {dest} not found after discovery.")
+                logging.info(f"Route to {dest} not found after discovery.")
+        else:
+            print(f"No route information received for {dest}.")
+            logging.info(f"No route information received for {dest}.")
 
 if __name__ == "__main__":
     while True:
